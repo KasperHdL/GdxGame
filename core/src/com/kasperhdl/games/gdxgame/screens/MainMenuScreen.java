@@ -9,8 +9,6 @@ import com.kasperhdl.games.gdxgame.Assets;
 import com.kasperhdl.games.gdxgame.GdxGame;
 import com.kasperhdl.games.gdxgame.Settings;
 
-import static com.badlogic.gdx.Input.*;
-
 /**
  * Created by @Kasper on 03/03/2015
  * <p/>
@@ -28,14 +26,13 @@ public class MainMenuScreen extends ScreenAdapter{
     public MainMenuScreen(GdxGame game){
         this.game = game;
 
-        guiCam = new OrthographicCamera(Settings.screenWidth,Settings.screenHeight);
+        guiCam = new OrthographicCamera(Gdx.graphics.getWidth(),Gdx.graphics.getHeight());
         guiCam.position.set(guiCam.viewportWidth/2,guiCam.viewportHeight/2,0);
     }
 
     public void update(){
         if(Gdx.input.isKeyPressed(Input.Keys.SPACE)){
             game.setScreen(new GameScreen(game));
-            return;
         }
     }
 
@@ -50,7 +47,7 @@ public class MainMenuScreen extends ScreenAdapter{
         game.batch.enableBlending();
         game.batch.begin();
         float textWidth = Assets.font.getBounds("Press space to Start").width;
-        Assets.font.draw(game.batch, "Press space to Start", Settings.screenWidth / 2 - textWidth / 2, 20);
+        Assets.font.draw(game.batch, "Press space to Start", Gdx.graphics.getWidth() / 2 - textWidth / 2, 20);
         game.batch.end();
 
     }

@@ -10,7 +10,8 @@ import com.badlogic.gdx.physics.box2d.World;
 import com.kasperhdl.games.gdxgame.Assets;
 import com.kasperhdl.games.gdxgame.GameWorld;
 import com.kasperhdl.games.gdxgame.GdxGame;
-import com.kasperhdl.games.gdxgame.Settings;
+import com.kasperhdl.games.gdxgame.systems.CameraSystem;
+import com.kasperhdl.games.gdxgame.systems.PlayerSystem;
 import com.kasperhdl.games.gdxgame.systems.RenderSystem;
 
 /**
@@ -38,6 +39,7 @@ public class GameScreen extends ScreenAdapter {
 
     OrthographicCamera guiCam;
 
+
     World world;
 
     GameWorld gameWorld;
@@ -49,26 +51,84 @@ public class GameScreen extends ScreenAdapter {
 
         state = Game_State.GAME_READY;
 
-        guiCam = new OrthographicCamera(Settings.screenWidth, Settings.screenHeight);
+        guiCam = new OrthographicCamera(Gdx.graphics.getWidth(),Gdx.graphics.getHeight());
         guiCam.position.set(guiCam.viewportWidth/2,guiCam.viewportHeight/2,0);
 
         engine = new Engine();
-        world = new World(new Vector2(0,0f),true);
+        world = new World(new Vector2(0,0),true);
 
         gameWorld = new GameWorld(engine,world);
+
+        engine.addSystem(new CameraSystem());
+
+        PlayerSystem p = new PlayerSystem();
+        engine.addSystem(p);
+
+        Gdx.input.setInputProcessor(p);
 
         engine.addSystem(new RenderSystem(game.batch));
 
         gameWorld.create();
 
 
+        state = Game_State.GAME_RUNNING;
 
     }
 
     public void update(float deltaTime){
 
-        engine.update(deltaTime);
+        switch(state){
+            case GAME_READY:
+                update_gameReady(deltaTime);
+                break;
+            case GAME_RUNNING:
+                update_gameRunning(deltaTime);
+                break;
+            case GAME_PAUSED:
+                update_gamePaused(deltaTime);
+                break;
+            case GAME_OVER:
+                update_gameOver(deltaTime);
+                break;
+        }
+    }
 
+    private void update_gameReady(float deltaTime){
+
+    }
+
+    private void update_gameRunning(float deltaTime){
+
+        world.step(deltaTime,6,2);
+        engine.update(deltaTime);
+    }
+
+    private void update_gamePaused(float deltaTime){
+
+    }
+
+    private void update_gameOver(float deltaTime){
+
+    }
+
+    public void drawUI () {
+        guiCam.update();
+        game.batch.setProjectionMatrix(guiCam.combined);
+        game.batch.begin();
+
+        float textWidth = Assets.font.getBounds("Game Running").width;
+        Assets.font.draw(game.batch, "Game Running", Gdx.graphics.getWidth() / 2 - textWidth / 2, 20);
+        game.batch.end();
+
+    }
+    @Override
+    public void render(float deltaTime){
+        update(deltaTime);
+        drawUI();
+    }
+
+
+    private void moveCamera(float deltaTime){
         //camera control
 
         float velX = 0;
@@ -89,22 +149,6 @@ public class GameScreen extends ScreenAdapter {
 
         engine.getSystem(RenderSystem.class).camera.translate(velX * deltaTime,velY * deltaTime);
 
-    }
-
-    public void drawUI () {
-        guiCam.update();
-        game.batch.setProjectionMatrix(guiCam.combined);
-        game.batch.begin();
-
-        float textWidth = Assets.font.getBounds("Game Running").width;
-        Assets.font.draw(game.batch, "Game Running", Settings.screenWidth / 2 - textWidth / 2, 20);
-        game.batch.end();
-
-    }
-    @Override
-    public void render(float deltaTime){
-        update(deltaTime);
-        drawUI();
     }
 
 }

@@ -2,16 +2,16 @@ package com.kasperhdl.games.gdxgame.systems;
 
 import com.badlogic.ashley.core.*;
 import com.badlogic.ashley.utils.ImmutableArray;
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.graphics.g3d.utils.CameraInputController;
 import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
-import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
 import com.kasperhdl.games.gdxgame.Settings;
-import com.kasperhdl.games.gdxgame.components.SpriteComponent;
 import com.kasperhdl.games.gdxgame.components.BodyComponent;
 import com.kasperhdl.games.gdxgame.components.TextureComponent;
 import com.kasperhdl.games.gdxgame.components.TransformComponent;
@@ -29,7 +29,7 @@ import com.kasperhdl.games.gdxgame.components.TransformComponent;
 
  public class RenderSystem extends EntitySystem {
     private ImmutableArray<Entity> entities;
-    //private ComponentMapper<SpriteComponent> spriteMap = ComponentMapper.getFor(SpriteComponent.class);
+
     private ComponentMapper<TextureComponent> textureMap = ComponentMapper.getFor(TextureComponent.class);
     private ComponentMapper<TransformComponent> transformMap = ComponentMapper.getFor(TransformComponent.class);
     private ComponentMapper<BodyComponent> bodyMap = ComponentMapper.getFor(BodyComponent.class);
@@ -38,20 +38,24 @@ import com.kasperhdl.games.gdxgame.components.TransformComponent;
 
     public OrthographicCamera camera;
 
-    static final float FRUSTUM_WIDTH = 10;
-    static final float FRUSTUM_HEIGHT = 10;
-
-    public float pixelsPerMeter = 1.0f / 100.0f;
+    private Box2DDebugRenderer debugRenderer;
+    private Matrix4 debugMatrix;
 
 
     public RenderSystem(SpriteBatch batch){
         this.batch = batch;
 
-        camera = new OrthographicCamera(FRUSTUM_WIDTH, FRUSTUM_HEIGHT);
-        camera.position.set(0, 0, 0);
+        camera = new OrthographicCamera(Gdx.graphics.getWidth() * Settings.pixelToMeter,Gdx.graphics.getHeight() * Settings.pixelToMeter);
+        debugMatrix = new Matrix4(camera.combined);
+        debugRenderer = new Box2DDebugRenderer();
+        debugRenderer.setDrawVelocities(true);
+        debugRenderer.setDrawBodies(true);
+
     }
 
+    @Override
     public void addedToEngine(Engine engine){
+        //noinspection unchecked
         entities = engine.getEntitiesFor(Family.all(TextureComponent.class, BodyComponent.class, TransformComponent.class).get());
     }
 
@@ -61,28 +65,30 @@ import com.kasperhdl.games.gdxgame.components.TransformComponent;
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
 
+        //debugRenderer.render(world, debugMatrix);
+
         for(int i = 0;i<entities.size();i++){
             Entity entity = entities.get(i);
-            
-           //Sprite sprite = spriteMap.get(entity).sprite;
+
             TextureRegion tex = textureMap.get(entity).region;
-            if(tex == null)continue;
+            if(tex == null)
+                continue;
             Body body = bodyMap.get(entity).body;
             TransformComponent t = transformMap.get(entity);
 
-            //sprite.setPosition(body.getPosition().x, body.getPosition().y);
-
-
-            //batch.draw(sprite, sprite.getX(), sprite.getY(),sprite.getWidth(),sprite.getHeight(),t.scale.x * pixelsPerMeter,t.scale.y * pixelsPerMeter, MathUtils.radiansToDegrees * t.rotation);
-
-            float width = tex.getRegionWidth();
-            float height = tex.getRegionHeight();
+            float width = tex.getRegionWidth() * Settings.pixelToMeter;
+            float height = tex.getRegionHeight()* Settings.pixelToMeter;
 
             Vector2 origin = new Vector2(width/2,height/2);
-            Vector2 bodyPos = body.getPosition();
-            batch.draw(tex,bodyPos.x,bodyPos.y,origin.x,origin.y,width,height,t.scale.x * pixelsPerMeter,t.scale.y * pixelsPerMeter,t.rotation);
+            Vector2 bodyPos = body.getPosition().sub(origin);
+
+            batch.draw(tex,bodyPos.x,bodyPos.y,origin.x,origin.y,width,height,t.scale.x,t.scale.y,(body.getAngle()/ MathUtils.PI) * 180);
         }
 
         batch.end();
+    }
+
+    public OrthographicCamera getCamera(){
+        return camera;
     }
 }

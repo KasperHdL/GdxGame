@@ -17,8 +17,8 @@ public class Settings {
     public final static String file = ".savefile";
     public static boolean soundEnabled = true;
 
-    public static float screenWidth = 320;
-    public static float screenHeight = 480;
+    public static float meterToPixel = 32f;
+    public static float pixelToMeter = 1/meterToPixel;
 
     public static void load(){
         try{

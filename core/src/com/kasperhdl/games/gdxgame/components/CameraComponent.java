@@ -17,4 +17,6 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 public class CameraComponent extends Component{
     public Entity target;
     public OrthographicCamera camera;
+
+    public float drag;
 }
